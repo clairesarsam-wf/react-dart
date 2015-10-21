@@ -8,9 +8,31 @@ import "package:react/react.dart";
 import "dart:js";
 import "dart:html";
 import "dart:async";
+import "package:js/js.dart";
 
 var _React = context['React'];
 var _Object = context['Object'];
+
+@JS()
+class React {
+  external static dynamic createFactory(JsFunction reactClass);
+
+  external static dynamic findDOMNode(JsObject jsThis);
+
+  external static dynamic createClass(JsMap map);
+
+  external static dynamic createElement(dynamic name, dynamic propsmap, dynamic children);
+
+  external static dynamic render(JsObject component, HtmlElement element);
+
+  external static dynamic unmountComponentAtNode(HtmlElement element);
+
+  external static dynamic renderToString(JsObject component);
+
+  external static dynamic renderToStaticMarkup(JsObject component);
+
+  external static dynamic initializeTouchEvents(bool initialize);
+}
 
 const PROPS = 'props';
 const INTERNAL = '__internal__';
@@ -70,7 +92,7 @@ class ReactDartComponentFactoryProxy extends ReactComponentFactoryProxy {
 
   ReactDartComponentFactoryProxy(JsFunction reactClass) :
     this.reactClass = reactClass,
-    this.reactComponentFactory = _React.callMethod('createFactory', [reactClass]);
+    this.reactComponentFactory = React.createFactory(reactClass);
 
   JsFunction get type => reactClass;
 
@@ -207,7 +229,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
    */
   var componentDidMount = new JsFunction.withThis((JsObject jsThis) => zone.run(() {
     //you need to get dom node by calling findDOMNode
-    var rootNode = _React.callMethod('findDOMNode', [jsThis]);
+    var rootNode = React.findDOMNode(jsThis);
     _getComponent(jsThis).componentDidMount(rootNode);
   }));
 
@@ -277,7 +299,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
       new JsFunction.withThis((JsObject jsThis, prevProps, prevState, prevContext) => zone.run(() {
     var prevInternalProps = _getInternalProps(prevProps);
     //you don't get root node as parameter but need to get it directly
-    var rootNode = _React.callMethod('findDOMNode', [jsThis]);
+    var rootNode = React.findDOMNode(jsThis);
     Component component = _getComponent(jsThis);
     component.componentDidUpdate(prevInternalProps, component.prevState, rootNode);
   }));
@@ -310,7 +332,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
   /**
    * create reactComponent with wrapped functions
    */
-  JsFunction reactComponentClass = _React.callMethod('createClass', [newJsMap(
+  JsFunction reactComponentClass = React.createClass(newJsMap(
     removeUnusedMethods({
       'componentWillMount': componentWillMount,
       'componentDidMount': componentDidMount,
@@ -323,7 +345,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
       'getInitialState': getInitialState,
       'render': render
     }, skipMethods)
-  )]);
+  ));
 
   /**
    * return ReactComponentFactory which produce react component with set props and children[s]
@@ -350,8 +372,8 @@ class ReactDomComponentFactoryProxy extends ReactComponentFactoryProxy {
     convertProps(props);
 
     List reactParams = [name, newJsMap(props), children];
-
-    return _React.callMethod('createElement', reactParams);
+    print(reactParams);
+    return React.createElement(name, newJsMap(props), children);
   }
 
   @override
@@ -365,7 +387,7 @@ class ReactDomComponentFactoryProxy extends ReactComponentFactoryProxy {
       List reactParams = [name, newJsMap(props)];
       reactParams.addAll(children);
 
-      return _React.callMethod('createElement', reactParams);
+      return React.createElement(reactParams);
     }
 
     return super.noSuchMethod(invocation);
@@ -606,19 +628,19 @@ Set _syntheticWheelEvents = new Set.from(["onWheel",]);
 
 
 JsObject _render(JsObject component, HtmlElement element) {
-  return _React.callMethod('render', [component, element]);
+  return React.render(component, element);
 }
 
 String _renderToString(JsObject component) {
-  return _React.callMethod('renderToString', [component]);
+  return React.renderToString(component);
 }
 
 String _renderToStaticMarkup(JsObject component) {
-  return _React.callMethod('renderToStaticMarkup', [component]);
+  return React.renderToStaticMarkup(component);
 }
 
 bool _unmountComponentAtNode(HtmlElement element) {
-  return _React.callMethod('unmountComponentAtNode', [element]);
+  return React.unmountComponentAtNode(element);
 }
 
 dynamic _findDomNode(component) {
@@ -626,11 +648,11 @@ dynamic _findDomNode(component) {
   // which has jsComponent closured inside and calls on it findDOMNode
   if (component is Component) return component.getDOMNode();
   //otherwise we have js component so pass it in findDOM node
-  return _React.callMethod('findDOMNode', [component]);
+  return React.findDOMNode(component);
 }
 
 void setClientConfiguration() {
-  _React.callMethod('initializeTouchEvents', [true]);
+  React.initializeTouchEvents(true);
   setReactConfiguration(_reactDom, _registerComponent, _render, _renderToString,
       _renderToStaticMarkup, _unmountComponentAtNode, _findDomNode);
 }
