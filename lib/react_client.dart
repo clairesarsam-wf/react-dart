@@ -19,7 +19,7 @@ class React {
 
   external static dynamic findDOMNode(JsObject jsThis);
 
-  external static dynamic createClass(JsMap map);
+  external static dynamic createClass(dynamic map);
 
   external static dynamic createElement(dynamic name, dynamic propsmap, dynamic children);
 
@@ -372,7 +372,6 @@ class ReactDomComponentFactoryProxy extends ReactComponentFactoryProxy {
     convertProps(props);
 
     List reactParams = [name, newJsMap(props), children];
-    print(reactParams);
     return React.createElement(name, newJsMap(props), children);
   }
 
