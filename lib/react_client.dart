@@ -10,16 +10,16 @@ import "dart:html";
 import "dart:async";
 import "package:js/js.dart";
 
-var _React = context['React'];
+//var _React = context['React'];
 var _Object = context['Object'];
 
 @JS()
 class React {
-  external static dynamic createFactory(JsFunction reactClass);
+  external static JsFunction createFactory(JsFunction reactClass);
 
   external static dynamic findDOMNode(JsObject jsThis);
 
-  external static dynamic createClass(dynamic map);
+  external static JsFunction createClass([JsObject map]);
 
   external static dynamic createElement(dynamic name, [dynamic propsmap, dynamic children]);
 
@@ -200,7 +200,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
     };
 
     var getDOMNode = () {
-      return _React.callMethod('findDOMNode', [jsThis]);
+      return React.findDOMNode(jsThis);
     };
 
     Component component = componentFactory()
