@@ -15,11 +15,11 @@ var _Object = context['Object'];
 
 @JS()
 class React {
-  external static JsFunction createFactory(JsFunction reactClass);
+  external static dynamic createFactory(JsFunction reactClass);
 
   external static dynamic findDOMNode(JsObject jsThis);
 
-  external static JsFunction createClass([JsObject map]);
+  external static dynamic createClass(spec);
 
   external static dynamic createElement(dynamic name, [dynamic propsmap, dynamic children]);
 
@@ -32,6 +32,13 @@ class React {
   external static dynamic renderToStaticMarkup(JsObject component);
 
   external static dynamic initializeTouchEvents(bool initialize);
+}
+
+@JS()
+class Spec {
+  external dynamic get render;
+
+  external factory Spec({render});
 }
 
 const PROPS = 'props';
@@ -88,7 +95,7 @@ abstract class ReactComponentFactoryProxy implements Function {
  */
 class ReactDartComponentFactoryProxy extends ReactComponentFactoryProxy {
   final JsFunction reactClass;
-  final JsFunction reactComponentFactory;
+  final Function reactComponentFactory;
 
   ReactDartComponentFactoryProxy(JsFunction reactClass) :
     this.reactClass = reactClass,
@@ -102,7 +109,7 @@ class ReactDartComponentFactoryProxy extends ReactComponentFactoryProxy {
       children
     ];
 
-    return reactComponentFactory.apply(reactParams);
+    return reactComponentFactory(generateExtendedJsProps(props, children), children);
   }
 
   dynamic noSuchMethod(Invocation invocation) {
@@ -113,7 +120,7 @@ class ReactDartComponentFactoryProxy extends ReactComponentFactoryProxy {
       List reactParams = [generateExtendedJsProps(props, children)];
       reactParams.addAll(children);
 
-      return reactComponentFactory.apply(reactParams);
+      return Function.apply(reactComponentFactory, reactParams);
     }
 
     return super.noSuchMethod(invocation);
@@ -178,6 +185,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
     return newJsObjectEmpty();
   }));
 
+
   /**
    * get initial state from component.getInitialState, put them to state.
    *
@@ -213,6 +221,7 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
     _getComponent(jsThis).initStateInternal();
     return newJsObjectEmpty();
   }));
+
 
   /**
    * only wrap componentWillMount
@@ -320,6 +329,8 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
     return _getComponent(jsThis).render();
   }));
 
+  render['name'] = 'render';
+
   var skipableMethods = ['componentDidMount', 'componentWillReceiveProps',
                          'shouldComponentUpdate', 'componentDidUpdate',
                          'componentWillUnmount'];
@@ -329,24 +340,12 @@ ReactComponentFactory _registerComponent(ComponentFactory componentFactory, [Ite
     return originalMap;
   }
 
+  var spec = new Spec(render: render);
+
   /**
    * create reactComponent with wrapped functions
    */
-  JsFunction reactComponentClass = React.createClass(newJsMap(
-    removeUnusedMethods({
-      'componentWillMount': componentWillMount,
-      'componentDidMount': componentDidMount,
-      'componentWillReceiveProps': componentWillReceiveProps,
-      'shouldComponentUpdate': shouldComponentUpdate,
-      'componentWillUpdate': componentWillUpdate,
-      'componentDidUpdate': componentDidUpdate,
-      'componentWillUnmount': componentWillUnmount,
-      'getDefaultProps': getDefaultProps,
-      'getInitialState': getInitialState,
-      'render': render
-    }, skipMethods)
-  ));
-
+  var reactComponentClass = React.createClass(spec);
   /**
    * return ReactComponentFactory which produce react component with set props and children[s]
    */
@@ -386,7 +385,7 @@ class ReactDomComponentFactoryProxy extends ReactComponentFactoryProxy {
       List reactParams = [name, newJsMap(props)];
       reactParams.addAll(children);
 
-      return React.createElement(reactParams);
+      return React.createElement(name, newJsMap(props), children);
     }
 
     return super.noSuchMethod(invocation);
