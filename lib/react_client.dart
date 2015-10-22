@@ -21,7 +21,7 @@ class React {
 
   external static dynamic createClass(dynamic map);
 
-  external static dynamic createElement(dynamic name, dynamic propsmap, dynamic children);
+  external static dynamic createElement(dynamic name, [dynamic propsmap = const {}, dynamic children = const []]);
 
   external static dynamic render(JsObject component, HtmlElement element);
 
